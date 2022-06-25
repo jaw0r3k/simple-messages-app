@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Messager</title>
+</head>
+<body>
+    <form id="form">
+        </br>
+        </br>
+        </br>
+        <label for="fname">Nick Name:</label><br>
+        <input type="text" id="fname" name="fname"><br>
+        <label for="tag">Message</label><br>
+        <input for="tag" id="tag" name="tag"><br>
+        <button id="sendMessage" type="button">Confirm</button><br>
+    </form>
+    <script>
+        let socket = new WebSocket(`wss://${location.host}/websocket`);
+        let author = document.getElementById("fname")
+        author.value = localStorage.getItem("author") ?? "";
+        function createMessage(message) {
+            const newDiv = document.createElement("div");
+            const newContent = document.createTextNode(`From ${message.author}: ${message.message}`);
+            newDiv.appendChild(newContent);
+            const currentDiv = document.getElementById("form");
+            document.body.insertBefore(newDiv, currentDiv);
+        }
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if(Array.isArray(data)){
+                data.forEach(d => {
+                    createMessage(d)
+                }) 
+            } else {
+                createMessage(data)
+            }
+        };
+        document.getElementById("sendMessage").onclick = () => {
+            const message = document.getElementById("tag").value
+            localStorage.setItem("author", author);
+            socket.send(JSON.stringify({ message, author }))
+        }
+    </script>
+</body>
+</html>
